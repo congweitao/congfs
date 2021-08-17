@@ -1,0 +1,22 @@
+#!/bin/bash
+#
+### BEGIN INIT INFO
+# Provides:          congfs-storage
+# Required-Start:
+# Should-Start:      $network congfs-mgmtd openibd openib rdma opensmd opensm
+# Required-Stop:
+# Should-Stop:       $network congfs-mgmtd openibd openib rdma opensmd opensm
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# chkconfig:         35 96 8
+# Short-Description: ConGFS Storage
+# Description:       Start ConGFS Storage Server
+### END INIT INFO
+
+APP_NAME="ConGFS Storage Server"
+SERVICE_NAME=congfs-storage
+
+# source function library
+. /etc/congfs/lib/start-stop-functions
+. /etc/congfs/lib/init-multi-mode
+

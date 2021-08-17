@@ -1,0 +1,21 @@
+#!/bin/bash
+#
+### BEGIN INIT INFO
+# Provides:          congfs-helperd
+# Required-Start:
+# Should-Start:      $network
+# Required-Stop:
+# Should-Stop:       $network
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# chkconfig:         35 98 6
+# Short-Description: ConGFS Helperd
+# Description:       Start ConGFS Helperd
+### END INIT INFO
+
+APP_NAME="ConGFS Client Helper Daemon"
+SERVICE_NAME=congfs-helperd
+
+# source function library
+. /etc/congfs/lib/start-stop-functions
+. /etc/congfs/lib/init-multi-mode

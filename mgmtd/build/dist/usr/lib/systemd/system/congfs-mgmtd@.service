@@ -1,0 +1,18 @@
+[Unit]
+Description=ConGFS Management Server (multimode)
+Documentation=http://www.congfs.com/content/documentation/
+Requires=network-online.target
+# We disable the wants service, because it spams the log files
+#Wants=openibd.service openib.service rdma.service opensmd.service opensm.service
+After=network-online.target openibd.service openib.service rdma.service opensmd.service opensm.service zfs.target
+
+[Service]
+ExecStart=/opt/congfs/sbin/congfs-mgmtd cfgFile=/etc/congfs/%I.d/congfs-mgmtd.conf runDaemonized=false
+Type=simple
+
+# If the sysTargetOfflineTimeoutSecs in congfs-mgmtd.conf is set over 240, this value needs to be
+# adjusted accordingly. Recommendation: sysTargetOfflineTimeoutSecs + 60
+TimeoutStopSec=300
+
+[Install]
+WantedBy=multi-user.target

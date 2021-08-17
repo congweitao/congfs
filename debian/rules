@@ -1,0 +1,210 @@
+#!/usr/bin/make -f
+
+# this is so awful
+PAREN = )
+CONGFS_VERSION = $(shell head -n1 debian/changelog | grep -P --only-matching '(?<=\d:)[^$(PAREN)~]+')
+CONGFS_MAJOR = $(shell head -n1 debian/changelog | grep -P --only-matching '(?<=\d:)\d+')
+
+DPKG_EXPORT_BUILDFLAGS = 1
+include /usr/share/dpkg/default.mk
+
+ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+	NUMJOBS = $(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+endif
+
+%:
+	dh $@ --parallel --with dkms
+
+override_dh_auto_build:
+	make -j$(NUMJOBS) common-all daemons utils
+	make -j$(NUMJOBS) -C upgrade/congfs_mirror_md/build all
+	make -j$(NUMJOBS) -C java_lib/build
+
+# no build-runnable tests exist (yet)
+override_dh_auto_test:
+
+# package is split
+override_dh_auto_install:
+
+override_dh_install:
+	@# common
+	install -D common_package/scripts/etc/congfs/lib/start-stop-functions \
+		debian/congfs-common/etc/congfs/lib/start-stop-functions
+	install -D common_package/scripts/etc/congfs/lib/init-multi-mode \
+		debian/congfs-common/etc/congfs/lib/init-multi-mode
+	@# libconggfs-ib
+	install -D common/build/libcongfs_ib.so \
+		debian/libcongfs-ib/opt/congfs/lib/libcongfs_ib.so
+	@# daemons
+	make -j$(NUMJOBS) DESTDIR=debian/congfs-helperd helperd-install
+	make -j$(NUMJOBS) DESTDIR=debian/congfs-meta meta-install
+	make -j$(NUMJOBS) DESTDIR=debian/congfs-storage storage-install
+	make -j$(NUMJOBS) DESTDIR=debian/congfs-mgmtd mgmtd-install
+	make -j$(NUMJOBS) DESTDIR=debian/congfs-mon mon-install
+	@# setup scripts
+	install -D storage/build/dist/sbin/congfs-setup-storage \
+		debian/congfs-storage/opt/congfs/sbin/congfs-setup-storage
+	install -D meta/build/dist/sbin/congfs-setup-meta \
+		debian/congfs-meta/opt/congfs/sbin/congfs-setup-meta
+	install -D mgmtd/build/dist/sbin/congfs-setup-mgmtd \
+		debian/congfs-mgmtd/opt/congfs/sbin/congfs-setup-mgmtd
+	@# daemon init files
+	install -D storage/build/dist/etc/init.d/congfs-storage.init debian/congfs-storage.init
+	install -D meta/build/dist/etc/init.d/congfs-meta.init debian/congfs-meta.init
+	install -D mgmtd/build/dist/etc/init.d/congfs-mgmtd.init debian/congfs-mgmtd.init
+	install -D helperd/build/dist/etc/init.d/congfs-helperd.init debian/congfs-helperd.init
+	install -D mon/build/dist/etc/init.d/congfs-mon.init debian/congfs-mon.init
+	cat common_package/build/dist/etc/init.d/congfs-service.init >> debian/congfs-storage.init
+	cat common_package/build/dist/etc/init.d/congfs-service.init >> debian/congfs-meta.init
+	cat common_package/build/dist/etc/init.d/congfs-service.init >> debian/congfs-mgmtd.init
+	cat common_package/build/dist/etc/init.d/congfs-service.init >> debian/congfs-helperd.init
+	cat common_package/build/dist/etc/init.d/congfs-service.init >> debian/congfs-mon.init
+	@# daemon configs and defaults
+	install -D -m644 storage/build/dist/etc/default/congfs-storage \
+		debian/congfs-storage.default
+	install -D -m644 storage/build/dist/etc/congfs-storage.conf \
+		debian/congfs-storage/etc/congfs/congfs-storage.conf
+	install -D -m644 meta/build/dist/etc/default/congfs-meta \
+		debian/congfs-meta.default
+	install -D -m644 meta/build/dist/etc/congfs-meta.conf \
+		debian/congfs-meta/etc/congfs/congfs-meta.conf
+	install -D -m644 mgmtd/build/dist/etc/default/congfs-mgmtd \
+		debian/congfs-mgmtd.default
+	install -D -m644 mgmtd/build/dist/etc/congfs-mgmtd.conf \
+		debian/congfs-mgmtd/etc/congfs/congfs-mgmtd.conf
+	install -D -m644 helperd/build/dist/etc/default/congfs-helperd \
+		debian/congfs-helperd.default
+	install -D -m644 helperd/build/dist/etc/congfs-helperd.conf \
+		debian/congfs-helperd/etc/congfs/congfs-helperd.conf
+	install -D -m644 mon/build/dist/etc/default/congfs-mon \
+		debian/congfs-mon.default
+	install -D -m644 mon/build/dist/etc/congfs-mon.conf \
+		debian/congfs-mon/etc/congfs/congfs-mon.conf
+	@# mon-grafana
+	mkdir -p debian/congfs-mon-grafana/opt/congfs/lib/grafana
+	cp -a mon/scripts/grafana/* debian/congfs-mon-grafana/opt/congfs/lib/grafana
+	@# upgraders
+	install -D upgrade/congfs_mirror_md/build/congfs-mirror-md \
+		debian/congfs-mirror-md/opt/congfs/sbin/congfs-mirror-md
+	@# utils
+	make -j$(NUMJOBS) DESTDIR=debian/congfs-utils ctl-install fsck-install event_listener-install
+	mkdir -p debian/congfs-utils/sbin
+	cp -a utils/scripts/fsck.congfs debian/congfs-utils/sbin
+	mkdir -p debian/congfs-utils/usr/bin
+	cp -a utils/scripts/congfs-* debian/congfs-utils/usr/bin
+	mkdir -p debian/congfs-utils/opt/congfs/lib
+	cp java_lib/build/libjcongfs.so java_lib/build/jcongfs.jar \
+		debian/congfs-utils/opt/congfs/lib/
+	install -D -m644 utils/scripts/etc/bash_completion.d/congfs-ctl \
+		debian/congfs-utils/usr/share/bash-completion/completions/congfs-ctl
+	mkdir -p debian/congfs-utils/usr/sbin
+	ln -s /opt/congfs/sbin/congfs-ctl debian/congfs-utils/usr/sbin/congfs-ctl
+	ln -s /opt/congfs/sbin/congfs-fsck debian/congfs-utils/usr/sbin/congfs-fsck
+	@# utils-dev
+	mkdir -p debian/congfs-utils-dev/usr/include
+	cp -a event_listener/include/* debian/congfs-utils-dev/usr/include/
+	mkdir -p debian/congfs-utils-dev/usr/share/doc/congfs-utils-dev/examples/congfs-event-listener/source
+	cp -a event_listener/source/congfs-event-listener.cpp \
+		debian/congfs-utils-dev/usr/share/doc/congfs-utils-dev/examples/congfs-event-listener/source
+	mkdir -p debian/congfs-utils-dev/usr/share/doc/congfs-utils-dev/examples/congfs-event-listener/build
+	cp -a event_listener/build/Makefile \
+		debian/congfs-utils-dev/usr/share/doc/congfs-utils-dev/examples/congfs-event-listener/build/Makefile
+	@# conond-thirdparty-gpl
+	tar --strip-components=2 -xf conond_thirdparty_gpl/source/parallel-20150122.tar.bz2 parallel-20150122/src/parallel
+	mkdir -p debian/conond-thirdparty-gpl/opt/congfs/thirdparty/parallel
+	mv parallel debian/conond-thirdparty-gpl/opt/congfs/thirdparty/parallel
+	@# conond-thirdparty # does not build on most systems we support
+	@#make -j$(NUMJOBS) -C conond_thirdparty/build
+	@#mkdir -p debian/conond-thirdparty/opt/congfs/thirdparty/pcopy
+	@#mkdir -p debian/conond-thirdparty/usr/bin
+	@#install -D conond_thirdparty/build/pcopy/pcp.bin debian/conond-thirdparty/opt/congfs/thirdparty/pcopy
+	@#install -D conond_thirdparty/build/pcopy/pcp_cleanup debian/conond-thirdparty/opt/congfs/thirdparty/pcopy
+	@#install -D conond_thirdparty/build/pcopy/pcp_run debian/conond-thirdparty/opt/congfs/thirdparty/pcopy
+	@#install -D conond_thirdparty/build/pcopy/ssh.spawner debian/conond-thirdparty/opt/congfs/thirdparty/pcopy
+	@#cp conond_thirdparty/build/pcopy/README.txt debian/conond-thirdparty/opt/congfs/thirdparty/pcopy/
+	@#ln -s /opt/congfs/thirdparty/pcopy/pcp_run debian/conond-thirdparty/usr/bin/conond-pcopy
+	@# conond
+	mkdir -p debian/conond/opt/congfs/lib
+	mkdir -p debian/conond/opt/congfs/sbin
+	mkdir -p debian/conond/usr/bin
+	install -D conond/source/conond debian/conond/opt/congfs/sbin/conond
+	install -D conond/source/conond-cp debian/conond/opt/congfs/sbin/conond-cp
+	cp conond/scripts/lib/* debian/conond/opt/congfs/lib/
+	ln -s /opt/congfs/sbin/conond debian/conond/usr/bin/conond
+	ln -s /opt/congfs/sbin/conond-cp debian/conond/usr/bin/conond-cp
+	@# client
+	make -j$(NUMJOBS) -C client_module/build \
+		RELEASE_PATH=../../debian/congfs-client/opt/congfs/src/client \
+		CONGFS_VERSION=$(CONGFS_VERSION) prepare_release
+	# for compat package
+	mkdir -p debian/congfs-client-compat/opt/congfs/src/client
+	cp -a debian/congfs-client/opt/congfs/src/client/client_module_$(CONGFS_MAJOR) \
+		debian/congfs-client-compat/opt/congfs/src/client/client_compat_module_$(CONGFS_MAJOR)
+	# set the compat fstype
+	echo congfs-$(CONGFS_MAJOR) > \
+		debian/congfs-client-compat/opt/congfs/src/client/client_compat_module_$(CONGFS_MAJOR)/build/congfs.fstype
+	install -D client_module/build/dist/etc/init.d/congfs-client.init debian/congfs-client.init
+	install -D -m644 client_module/build/dist/etc/default/congfs-client \
+		debian/congfs-client.default
+	install -D -m644 client_module/build/dist/etc/congfs-client.conf \
+		debian/congfs-client/etc/congfs/congfs-client.conf
+	install -D -m644 client_module/build/dist/etc/congfs-client-build.mk \
+		debian/congfs-client/etc/congfs/congfs-client-build.mk
+	install -D -m644 client_module/build/dist/etc/congfs-client-autobuild.conf \
+		debian/congfs-client/etc/congfs/congfs-client-autobuild.conf
+	install -D -m644 client_module/build/dist/etc/congfs-mounts.conf \
+		debian/congfs-client/etc/congfs/congfs-mounts.conf
+	install -D -m644 client_module/scripts/etc/congfs/lib/init-multi-mode.congfs-client \
+		debian/congfs-client/etc/congfs/lib/init-multi-mode.congfs-client
+	install -D client_module/build/dist/sbin/congfs-setup-client \
+		debian/congfs-client/opt/congfs/sbin/congfs-setup-client
+	install -D client_module/build/dist/etc/congfs-client-mount-hook.example \
+		debian/congfs-client/etc/congfs/congfs-client-mount-hook.example
+	@# client-dkms
+	mkdir -p debian/congfs-client-dkms/usr/src/congfs-$(CONGFS_VERSION)
+	cp -r client_module/build debian/congfs-client-dkms/usr/src/congfs-$(CONGFS_VERSION)
+	cp -r client_module/source debian/congfs-client-dkms/usr/src/congfs-$(CONGFS_VERSION)
+	rm -Rf debian/congfs-client-dkms/usr/src/congfs-$(CONGFS_VERSION)/build/dist
+	sed -e 's/__VERSION__/$(CONGFS_VERSION)/g' -e 's/__NAME__/congfs/g' -e 's/__MODNAME__/congfs/g' \
+		< client_module/dkms.conf.in \
+		> debian/congfs-client-dkms.dkms
+	install -D -m644 client_module/build/dist/etc/congfs-client.conf \
+		debian/congfs-client-dkms/etc/congfs/congfs-client.conf
+	@# client-dev
+	mkdir -p debian/congfs-client-dev/usr/include
+	cp -a client_devel/include/congfs debian/congfs-client-dev/usr/include/
+	mkdir -p debian/congfs-client-dev/usr/share/doc/congfs-client-dev/examples/
+	cp -a client_devel/build/dist/usr/share/doc/congfs-client-devel/examples/* \
+		debian/congfs-client-dev/usr/share/doc/congfs-client-dev/examples/
+
+# automatic stripping works only with debhelper >= 9.20160114 (since deb9).
+# until that's the oldest version we support, strip manually. also remove the -dbg packages
+# from the control file when we switch.
+override_dh_strip:
+	dh_strip -pcongfs-helperd    --dbg-package=congfs-helperd-dbg
+	dh_strip -pcongfs-meta       --dbg-package=congfs-meta-dbg
+	dh_strip -pcongfs-mgmtd      --dbg-package=congfs-mgmtd-dbg
+	dh_strip -pcongfs-mirror-md  --dbg-package=congfs-mirror-md-dbg
+	dh_strip -pcongfs-mon        --dbg-package=congfs-mon-dbg
+	dh_strip -pcongfs-storage    --dbg-package=congfs-storage-dbg
+	dh_strip -pcongfs-utils      --dbg-package=congfs-utils-dbg
+
+# avoid auto-start because default config is not useful
+override_dh_installinit:
+	for component in storage meta mgmtd helperd mon; do \
+		cp $$component/build/dist/usr/lib/systemd/system/congfs-$$component.service debian/; \
+		install -D -m644 $$component/build/dist/usr/lib/systemd/system/congfs-$$component@.service \
+			debian/congfs-$$component/lib/systemd/system/congfs-$$component@.service; \
+		dh_systemd_enable -p congfs-$$component --no-enable --name=congfs-$$component@ congfs-$$component@.service; \
+	done
+	cp client_module/build/dist/usr/lib/systemd/system/congfs-client.service debian/
+	cp client_module/build/dist/usr/lib/systemd/system/congfs-client@.service debian/
+	dh_systemd_enable
+	#
+	dh_installinit -pcongfs-mgmtd         --no-restart-on-upgrade --no-start -- start 90 2 3 4 5 . stop 90 0 1 6 .
+	dh_installinit -pcongfs-mon           --no-restart-on-upgrade --no-start -- start 90 2 3 4 5 . stop 90 0 1 6 .
+	dh_installinit -pcongfs-storage       --no-restart-on-upgrade --no-start -- start 99 2 3 4 5 . stop 99 0 1 6 .
+	dh_installinit -pcongfs-meta          --no-restart-on-upgrade --no-start -- start 90 2 3 4 5 . stop 90 0 1 6 .
+	dh_installinit -pcongfs-client        --no-restart-on-upgrade --no-start -- start 99 2 3 4 5 . stop 99 0 1 6 .
+	dh_installinit -pcongfs-client-compat --no-restart-on-upgrade --no-start -- start 99 2 3 4 5 . stop 99 0 1 6 .
+	dh_installinit -pcongfs-helperd       --no-restart-on-upgrade --no-start -- start 90 2 3 4 5 . stop 90 0 1 6 .

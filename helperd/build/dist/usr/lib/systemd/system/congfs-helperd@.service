@@ -1,0 +1,12 @@
+[Unit]
+Description=ConGFS Helperd (multimode)
+Documentation=http://www.congfs.com/content/documentation/
+Requires=network-online.target
+After=network-online.target
+
+[Service]
+ExecStart=/opt/congfs/sbin/congfs-helperd cfgFile=/etc/congfs/%I.d/congfs-helperd.conf runDaemonized=false
+Type=simple
+
+[Install]
+WantedBy=multi-user.target

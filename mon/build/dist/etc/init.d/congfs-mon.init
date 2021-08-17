@@ -1,0 +1,22 @@
+#!/bin/bash
+#
+### BEGIN INIT INFO
+# Provides:          congfs-mon
+# Required-Start:
+# Should-Start:      $network
+# Required-Stop:
+# Should-Stop:       $networkm
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# chkconfig:         35 95 9
+# Short-Description: ConGFS Mon
+# Description:       Start ConGFS Mon
+### END INIT INFO
+
+APP_NAME="ConGFS Mon"
+SERVICE_NAME=congfs-mon
+
+# source function library
+. /etc/congfs/lib/start-stop-functions
+. /etc/congfs/lib/init-multi-mode
+

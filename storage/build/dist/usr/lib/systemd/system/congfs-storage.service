@@ -1,0 +1,14 @@
+[Unit]
+Description=ConGFS Storage Server
+Documentation=http://www.congfs.com/content/documentation/
+Requires=network-online.target
+# We disable the wants service, because it spams the log files
+#Wants=congfs-mgmtd.service openibd.service openib.service rdma.service opensmd.service opensm.service
+After=network-online.target congfs-mgmtd.service openibd.service openib.service rdma.service opensmd.service opensm.service zfs.target
+
+[Service]
+ExecStart=/opt/congfs/sbin/congfs-storage cfgFile=/etc/congfs/congfs-storage.conf runDaemonized=false
+Type=simple
+
+[Install]
+WantedBy=multi-user.target

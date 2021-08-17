@@ -1,0 +1,25 @@
+include ../../build/Makefile
+
+main := ../source/program/Main.cpp
+sources := $(filter-out $(main), $(shell find ../source -iname '*.cpp'))
+
+$(call build-static-library,\
+   Helperd,\
+   $(sources),\
+   common dl,\
+   ../source)
+
+$(call define-dep-lib,\
+   Helperd,\
+   -I ../source,\
+   $(build_dir)/libHelperd.a)
+
+$(call build-executable,\
+   congfs-helperd,\
+   $(main),\
+   Helperd common dl)
+
+$(call build-test,\
+   test-runner,\
+   $(shell find ../tests -name '*.cpp'),\
+   Helperd common dl)

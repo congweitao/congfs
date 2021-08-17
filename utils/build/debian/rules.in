@@ -1,0 +1,106 @@
+#!/usr/bin/make -f
+
+DEB_BUILD_ROOT = debian/__NAME__
+
+# Uncomment this to turn on verbose mode.
+export DH_VERBOSE=1
+
+
+configure: configure-stamp
+configure-stamp:
+	dh_testdir
+
+	# nothing to do for us
+	touch configure-stamp
+	
+build: build-stamp
+
+build-stamp: $(QUILT_STAMPFN) configure-stamp 
+	dh_testdir
+	
+	make CONGFS_VERSION='__CONGFS_VERSION__' 			\
+		CONGFS_COMMON_PATH='__CONGFS_COMMON_PATH__'	\
+		CONGFS_THIRDPARTY_PATH='__CONGFS_THIRDPARTY_PATH__' \
+		CONGFS_ONLINE_CFG_PATH='__CONGFS_ONLINE_CFG_PATH__' \
+		CONGFS_FSCK_PATH='__CONGFS_FSCK_PATH__'	        \
+		USER_CXXFLAGS='__USER_CXXFLAGS__'		\
+		USER_LDFLAGS='__USER_LDFLAGS__'                 \
+		CONGFS_DEBUG='__CONGFS_DEBUG__'			\
+		-j __MAKE_CONCURRENCY__
+
+	touch build-stamp
+
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp configure-stamp 
+
+	make CONGFS_VERSION='__CONGFS_VERSION__' 			\
+		CONGFS_COMMON_PATH='__CONGFS_COMMON_PATH__'	\
+		CONGFS_ONLINE_CFG_PATH='__CONGFS_ONLINE_CFG_PATH__' \
+		CONGFS_FSCK_PATH='__CONGFS_FSCK_PATH__' \
+		clean
+	rm -f congfs-ctl
+	rm -f congfs-fsck
+
+	dh_clean
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_prep
+	dh_installdirs
+	
+	# manual installation
+	install -D --mode=u+rwxs,g+rx,o+rx congfs-ctl $(DEB_BUILD_ROOT)/opt/congfs/sbin/congfs-ctl
+	install -D --mode=u+rwx,g+rx,o+rx congfs-fsck $(DEB_BUILD_ROOT)/opt/congfs/sbin/congfs-fsck
+
+	mkdir -p ${DEB_BUILD_ROOT}/sbin
+	cp -a ../scripts/fsck.congfs ${DEB_BUILD_ROOT}/sbin/
+	mkdir -p $(DEB_BUILD_ROOT)/usr/bin/
+
+	ln -s /opt/congfs/sbin/congfs-ctl $(DEB_BUILD_ROOT)/usr/bin/congfs-ctl
+	ln -s /opt/congfs/sbin/congfs-fsck $(DEB_BUILD_ROOT)/usr/bin/congfs-fsck
+
+	cp -a ../scripts/congfs-* ${DEB_BUILD_ROOT}/usr/bin/
+	mkdir -p ${DEB_BUILD_ROOT}/opt/congfs/lib
+	cp libjcongfs.so jcongfs.jar ${DEB_BUILD_ROOT}/opt/congfs/lib/
+	mkdir -p ${DEB_BUILD_ROOT}/etc/bash_completion.d
+	cp -a ../scripts/etc/bash_completion.d/congfs-ctl ${DEB_BUILD_ROOT}/etc/bash_completion.d/
+	install -D --mode=u+rwx,g+rx,o+rx congfs-event-listener $(DEB_BUILD_ROOT)/opt/congfs/sbin/congfs-event-listener
+
+
+# Build architecture-independent files here.
+binary-indep:
+# We have nothing to do by default.
+
+
+# Build architecture-dependent files here.
+binary-arch: build install
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs 
+	dh_installdocs
+	dh_installexamples
+
+#	dh_install
+	dh_installman
+	dh_link
+	dh_strip --dbg-package=__NAME__-dbg
+	dh_compress
+	dh_fixperms
+	dh_installdeb
+	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+	dh_lintian
+
+override_dh_strip:
+	dh_strip --dbg-package=__NAME__-dbg
+
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install configure override_dh_strip
+

@@ -1,0 +1,21 @@
+Source: congfs-mirror-md
+Section: misc
+Priority: optional
+Maintainer: ConGFS Maintainers <packages@congfs.com>
+Build-Depends: debhelper (>= 7.0.0), lsb-release
+Standards-Version: 3.8.0
+
+Package: congfs-mirror-md
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: ConGFS metadata mirroring utility
+ This package contains the the migration utility for unmirrored to mirrored ConGFS metadata.
+
+Package: congfs-mirror-md-dbg
+Architecture: any
+Section: debug
+Priority: extra
+Depends: congfs-mirror-md (= ${binary:Version}), ${misc:Depends}
+Description: debugging symbols for congfs-mirror-md
+ The package contains the debugging symbols for congfs-mirror-md
+

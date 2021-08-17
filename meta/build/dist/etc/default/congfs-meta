@@ -1,0 +1,29 @@
+# ConGFS metadata service configuration.
+
+# Note: This file is only used together with sysV init scripts.
+#       If your system uses systemd, this file is ignored.
+#       In this case:
+#          
+#        - use `systemctl enable / disable`   to activate / decativate a service
+#          
+#        - systemd service templates are used for multimode
+#          (See https://www.congfs.io/wiki/MultiMode)
+#
+#
+# Set to "NO" to disable start of the ConGFS metadata daemon via the init
+# script.
+START_SERVICE="YES"
+
+# Set to "YES" if you want to start multiple metadata daemons with different
+# configuration files on this machine.
+#
+# Create a subdirectory with the ending ".d" in "/etc/congfs/" for every config
+# file. The subdirectory name will be used to identify a particular server
+# instance for init script start/stop.
+#
+# Note: The original config file in /etc/congfs will not be used when multi-mode
+# is enabled.
+#
+# Example: /etc/congfs/scratch.d/congfs-meta.conf
+# $ /etc/init.d/congfs-meta start scratch
+MULTI_MODE="NO"

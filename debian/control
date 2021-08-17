@@ -1,0 +1,216 @@
+Source: congfs
+Section: misc
+Priority: optional
+Maintainer: ConGFS Maintainers <packages@congfs.com>
+Build-Depends: debhelper (>= 9.0.0), lsb-release, librdmacm-dev, libibverbs-dev, java6-sdk, ant, kmod,
+               dkms, pkg-config, zlib1g-dev
+Standards-Version: 4.1.4.1
+
+
+
+Package: libcongfs-ib
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Description: ConGFS InfiniBand support
+ This package contains support libraries for InfiniBand.
+
+
+
+Package: congfs-common
+Architecture: any
+Depends: ${misc:Depends}
+Description: ConGFS common files
+ The package contains files required by all ConGFS daemon packages
+
+
+
+Package: congfs-helperd
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, congfs-common (= ${binary:Version})
+Recommends: libcongfs-ib (= ${binary:Version})
+Description: ConGFS helper daemon
+ The package contains the ConGFS helper daemon. The helper daemon is responsible
+ to write (kernel) client messages to the client log file.
+
+Package: congfs-helperd-dbg
+Architecture: any
+Section: debug
+Priority: extra
+Depends: congfs-helperd (= ${binary:Version}), ${misc:Depends}
+Description: debugging symbols for congfs-helperd
+ The package contains the debugging symbols for congfs-helperd
+
+
+
+Package: congfs-meta
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, congfs-common (= ${binary:Version})
+Recommends: libcongfs-ib (= ${binary:Version})
+Description: ConGFS metadata server daemon
+ The package contains the ConGFS metadata daemon.
+
+Package: congfs-meta-dbg
+Architecture: any
+Section: debug
+Priority: extra
+Depends: congfs-meta (= ${binary:Version}), ${misc:Depends}
+Description: debugging symbols for congfs-meta
+ The package contains the debugging symbols for congfs-meta
+
+
+
+Package: congfs-storage
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, congfs-common (= ${binary:Version})
+Recommends: libcongfs-ib (= ${binary:Version})
+Description: ConGFS storage server daemon
+ This package contains the ConGFS storage server binaries.
+
+Package: congfs-storage-dbg
+Architecture: any
+Section: debug
+Priority: extra
+Depends: congfs-storage (= ${binary:Version}), ${misc:Depends}
+Description: debugging symbols for congfs-storage
+ The package contains the debugging symbols for congfs-storage
+
+
+
+Package: congfs-mgmtd
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, congfs-common (= ${binary:Version})
+Recommends: libcongfs-ib (= ${binary:Version})
+Description: ConGFS management server daemon
+ The package contains the ConGFS management daemon.
+
+Package: congfs-mgmtd-dbg
+Architecture: any
+Section: debug
+Priority: extra
+Depends: congfs-mgmtd (= ${binary:Version}), ${misc:Depends}
+Description: debugging symbols for congfs-mgmtd
+ The package contains the debugging symbols for congfs-mgmtd
+
+
+
+Package: congfs-mon
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, congfs-common (= ${binary:Version})
+Recommends: libcongfs-ib (= ${binary:Version})
+Description: ConGFS mon daemon
+ The package contains the ConGFS mon daemon.
+
+Package: congfs-mon-dbg
+Architecture: any
+Section: debug
+Priority: extra
+Depends: congfs-mon (= ${binary:Version}), ${misc:Depends}
+Description: debugging symbols for congfs-mon
+ The package contains the debugging symbols for congfs-mon
+
+Package: congfs-mon-grafana
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: ConGFS mon dashboards for Grafana
+ This package contains the ConGFS mon dashboards to display monitoring data in Grafana.
+ The default dashboard setup requires both Grafana, and InfluxDB.
+
+
+
+Package: congfs-mirror-md
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: ConGFS metadata mirroring utility
+ This package contains the migration utility for unmirrored to
+ mirrored ConGFS metadata.
+
+Package: congfs-mirror-md-dbg
+Architecture: any
+Section: debug
+Priority: extra
+Depends: congfs-mirror-md (= ${binary:Version}), ${misc:Depends}
+Description: debugging symbols for congfs-mirror-md
+ The package contains the debugging symbols for congfs-mirror-md
+
+
+
+Package: congfs-utils
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, congfs-common (= ${binary:Version})
+Recommends: libcongfs-ib (= ${binary:Version})
+Description: ConGFS utils
+ This package contains ConGFS utilities.
+
+Package: congfs-utils-dbg
+Architecture: any
+Section: debug
+Priority: extra
+Depends: congfs-utils (= ${binary:Version}), ${misc:Depends}
+Description: debugging symbols for congfs-utils
+ The package contains the debugging symbols for congfs-utils
+
+Package: congfs-utils-dev
+Architecture: any
+Depends: ${misc:Depends}
+Description: ConGFS utils devel files
+ This package contains ConGFS development files and examples.
+
+
+
+Package: conond-thirdparty-gpl
+Architecture: any
+Depends: ${perl:Depends}, ${misc:Depends}
+Description: BeeOND thirdparty utilities (GPL licensed)
+ Thirdparty tools used for BeeOND, which are licensed under the GPL
+
+# does not build on most systems we support
+#Package: conond-thirdparty
+#Architecture: any
+#Depends: ${shlibs:Depends}, ${misc:Depends}
+#Description: BeeOND thirdparty utilitites
+# Thirdparty tools used for BeeOND
+
+Package: conond
+Architecture: any
+Depends: ${misc:Depends}, conond-thirdparty-gpl (= ${binary:Version}),
+  congfs-utils (= ${binary:Version}), congfs-mgmtd (= ${binary:Version}), congfs-meta (= ${binary:Version}),
+  congfs-storage (= ${binary:Version}),
+  congfs-client (= ${binary:Version}) | congfs-client-dkms (= ${binary:Version}),
+  congfs-helperd (= ${binary:Version}),
+  psmisc
+Description: BeeOND
+ This package contains BeeOND.
+
+
+
+Package: congfs-client
+Architecture: all
+Depends: ${misc:Depends}, build-essential
+Conflicts: congfs-client-dkms
+Recommends: linux-headers-amd64
+Description: ConGFS client
+ This package contains scripts, config and source files to build and
+ start congfs-client.
+
+Package: congfs-client-dkms
+Architecture: all
+Depends: ${misc:Depends}, dkms
+Conflicts: congfs-client
+Recommends: linux-headers-amd64
+Description: ConGFS client (DKMS version)
+ This package contains scripts, config and source files to build and
+ start congfs-client. It uses DKMS to build the kernel module.
+
+Package: congfs-client-compat
+Architecture: all
+Description: ConGFS client compat module, allows one to run two different client versions.
+ This package allows one to build and to run a compatibility client
+ kernel module on a system that has a newer congfs-client version
+ installed.
+Depends: ${misc:Depends}, build-essential
+
+Package: congfs-client-dev
+Architecture: any
+Depends: ${misc:Depends}
+Description: ConGFS client development files
+ This package contains ConGFS client development files.
