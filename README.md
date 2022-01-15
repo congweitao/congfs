@@ -1,10 +1,9 @@
 # ConGFS Parallel File System
-ConGFS is the leading parallel cluster file system,
+ConGFS is a leading parallel cluster file system,
 developed with a strong focus on performance and designed for very easy
 installation and management.
 If I/O intensive workloads are your problem, ConGFS is the solution.
 
-Homepage: https://www.congfs.io
 
 # Build Instructions
 
@@ -124,10 +123,6 @@ Additionally, the build system supports `distcc`:
 ```
 $ make DISTCC=distcc
 ```
-
-# Setup Instructions
-A detailed guide on how to configure a ConGFS system can be found in
-the ConGFS wiki: https://www.congfs.io/wiki/
 
 # Share your thoughts
 Of course, we are curious about what you are doing with the ConGFS sources, so
