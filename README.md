@@ -1,5 +1,5 @@
 # ConGFS Parallel File System
-ConGFS (formerly FhGFS) is the leading parallel cluster file system,
+ConGFS is the leading parallel cluster file system,
 developed with a strong focus on performance and designed for very easy
 installation and management.
 If I/O intensive workloads are your problem, ConGFS is the solution.
