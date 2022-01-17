@@ -45,20 +45,6 @@ Please consult the documentation of your distribution for details.
      ```
   4. Follow the instructions below to build ConGFS.
 
-### Debian
-On Debian or Ubuntu based systems run this command to install the required packages:
-```
-$ sudo apt install build-essential autoconf automake pkg-config devscripts debhelper \
-  libtool libattr1-dev xfslibs-dev lsb-release kmod librdmacm-dev libibverbs-dev \
-  default-jdk ant dh-systemd zlib1g-dev libssl-dev libcurl4-openssl-dev libblkid-dev uuid-dev
-```
-Note: If you have an older Debian system you might have to install the
-`module-init-tools` package instead of `kmod`.
-You also have the choice between
-the openssl, nss, or gnutls version of `libcurl-dev`. Choose the one you prefer.
-
-## Building Packages
-
 ### For development systems
 
 ConGFS comes with a Makefile capable of building packages for the system on which it is executed.
@@ -123,7 +109,3 @@ Additionally, the build system supports `distcc`:
 ```
 $ make DISTCC=distcc
 ```
-
-# Share your thoughts
-Of course, we are curious about what you are doing with the ConGFS sources, so
-don't forget to drop us a note...
